@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Status | PrimeMarket</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <nav class="glass">
+        <div class="container nav-content">
+            <a href="/" class="logo">
+                <span class="text-gradient">Prime</span>Market
+            </a>
+
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/#products">Products</a>
+                <a href="/status.html" style="color: white; font-weight: 700;">Track Order</a>
+            </div>
+
+            <button class="btn btn-primary">
+                Cart (0)
+            </button>
+        </div>
+    </nav>
+
+    <main style="min-height: 80vh; display: flex; align-items: center; justify-content: center;">
+        <div class="container">
+
+            <!-- Login Form -->
+            <div id="login-container" style="max-width: 400px; margin: 0 auto;">
+                <h1 style="text-align: center; margin-bottom: 8px;">Track Order</h1>
+                <p style="text-align: center; color: var(--text-secondary); margin-bottom: 32px;">Enter your details to
+                    view your purchased accounts.</p>
+
+                <div class="card" style="padding: 32px;">
+                    <form onsubmit="checkOrder(event)">
+                        <div style="margin-bottom: 20px;">
+                            <label
+                                style="display: block; color: var(--text-secondary); margin-bottom: 8px; font-size: 0.9rem;">Gmail
+                                Address</label>
+                            <input type="email" id="email" required placeholder="name@gmail.com"
+                                style="width: 100%; padding: 12px; border-radius: 8px; background: #09090b; border: 1px solid var(--border); color: white; font-family: inherit;">
+                        </div>
+
+                        <div style="margin-bottom: 24px;">
+                            <label
+                                style="display: block; color: var(--text-secondary); margin-bottom: 8px; font-size: 0.9rem;">Ticket
+                                ID</label>
+                            <input type="text" id="ticket" required placeholder="TKT-XXXXX"
+                                style="width: 100%; padding: 12px; border-radius: 8px; background: #09090b; border: 1px solid var(--border); color: white; font-family: inherit;">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">View Order</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Order Details (Hidden by default) -->
+            <div id="order-details" style="display: none; max-width: 600px; margin: 0 auto;">
+                <button onclick="location.reload()"
+                    style="background: none; border: none; color: var(--text-secondary); cursor: pointer; margin-bottom: 16px;">←
+                    Back</button>
+
+                <div class="card" style="padding: 40px;">
+                    <div style="text-align: center; margin-bottom: 32px;">
+                        <span
+                            style="background: rgba(34, 197, 94, 0.1); color: #4ade80; padding: 6px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">Status:
+                            Paid</span>
+                        <h2 id="order-product" style="margin-top: 16px; font-size: 2rem;">Product Name</h2>
+                        <p id="order-id" style="color: var(--text-secondary); font-family: monospace;">TKT-XXXXX</p>
+                    </div>
+
+                    <div
+                        style="border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 40px 0; margin-bottom: 24px;">
+                        <div style="display: flex; justify-content: space-around; position: relative;">
+                            <!-- Connecting Line -->
+                            <div
+                                style="position: absolute; top: 16px; left: 25%; right: 25%; height: 2px; background: var(--surface-hover); z-index: 0;">
+                                <div id="progress-line"
+                                    style="width: 0%; height: 100%; background: var(--primary); transition: width 0.3s;">
+                                </div>
+                            </div>
+
+                            <!-- Step 1: Received -->
+                            <div style="position: relative; z-index: 1; text-align: center;">
+                                <div
+                                    style="width: 34px; height: 34px; background: var(--primary); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px var(--primary-glow); font-weight: bold;">
+                                    ✓</div>
+                                <h4 style="margin-bottom: 4px;">Order Received</h4>
+                                <p style="font-size: 0.85rem; color: var(--text-secondary);">Payment verified.</p>
+                            </div>
+
+                            <!-- Step 2: Completed -->
+                            <div style="position: relative; z-index: 1; text-align: center;">
+                                <div id="step-completed-icon"
+                                    style="width: 34px; height: 34px; background: var(--surface); border: 2px solid var(--border); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); transition: all 0.3s;">
+                                    <span style="font-size: 0.8rem;">2</span>
+                                </div>
+                                <h4 id="step-completed-text"
+                                    style="margin-bottom: 4px; color: var(--text-secondary); transition: color 0.3s;">
+                                    Completed</h4>
+                                <p style="font-size: 0.85rem; color: var(--text-secondary);">Subscription sent.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 0.9rem;">
+                        <div>
+                            <span style="color: var(--text-secondary); display: block;">Email</span>
+                            <span id="order-email" style="color: white;">user@example.com</span>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-secondary); display: block;">Date</span>
+                            <span id="order-date" style="color: white;">12/12/2025</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        function checkOrder(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const ticket = document.getElementById('ticket').value.trim();
+
+            // Get orders
+            const orders = JSON.parse(localStorage.getItem('prime_orders') || '[]');
+
+            // Find match
+            const order = orders.find(o => o.email === email && o.id === ticket);
+
+            if (order) {
+                // Show order
+                document.getElementById('login-container').style.display = 'none';
+                document.getElementById('order-details').style.display = 'block';
+
+                document.getElementById('order-product').innerText = order.product;
+                document.getElementById('order-id').innerText = order.id;
+                document.getElementById('order-email').innerText = order.email;
+                document.getElementById('order-date').innerText = new Date(order.date).toLocaleString();
+
+                // Update Progress UI
+                if (order.status === 'completed') {
+                    // Fill line
+                    document.getElementById('progress-line').style.width = '100%';
+
+                    // Activate Step 2
+                    const icon = document.getElementById('step-completed-icon');
+                    icon.style.background = 'var(--primary)';
+                    icon.style.borderColor = 'var(--primary)';
+                    icon.style.boxShadow = '0 0 15px var(--primary-glow)';
+                    icon.style.color = 'white';
+                    icon.innerHTML = '✓';
+
+                    document.getElementById('step-completed-text').style.color = 'white';
+                }
+            } else {
+                alert('Order not found! Please check your details.');
+            }
+        }
+    </script>
+</body>
+
+</html>
