@@ -1,5 +1,5 @@
 "use client";
-// Force git update
+// Force redeploy: 2026-06-10
 
 import { useState } from "react";
 import ProductCard from "./components/ProductCard";
