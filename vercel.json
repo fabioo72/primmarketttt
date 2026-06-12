@@ -1,0 +1,9 @@
+{
+  "buildCommand": "echo 'Static Site Build'",
+  "outputDirectory": ".",
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/status", "destination": "/status.html" },
+    { "source": "/admin", "destination": "/admin.html" }
+  ]
+}
