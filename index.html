@@ -507,31 +507,69 @@
       gap: 16px;
     }
 
-    .review {
-      background: var(--bg-card);
+    .proof-card {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
       border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 24px;
+      aspect-ratio: 4/5;
+      cursor: pointer;
+      background: var(--bg-card);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease, box-shadow 0.3s ease;
     }
 
-    .review-stars {
-      color: var(--primary);
+    .proof-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(145, 70, 255, 0.4);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4), 0 0 20px var(--primary-glow);
+    }
+
+    .proof-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      transition: transform 0.5s ease;
+      display: block;
+    }
+
+    .proof-card:hover img {
+      transform: scale(1.05);
+    }
+
+    .proof-card-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(13, 13, 13, 0.95) 0%, rgba(13, 13, 13, 0.1) 50%, transparent 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 20px;
+      pointer-events: none;
+    }
+
+    .proof-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 100px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      backdrop-filter: blur(4px);
+      width: max-content;
+      margin-bottom: 8px;
+    }
+
+    .proof-title {
       font-size: 14px;
-      margin-bottom: 12px;
-      letter-spacing: 2px;
-    }
-
-    .review-text {
-      font-size: 14px;
-      color: #888;
-      line-height: 1.65;
-      margin-bottom: 16px;
-    }
-
-    .review-author {
-      font-size: 12px;
-      color: var(--text-muted);
-      font-weight: 500;
+      font-weight: 600;
+      color: #fff;
     }
 
     /* ── FAQ ── */
@@ -822,20 +860,40 @@
         <div class="section-title">What buyers say</div>
         <p class="section-sub">Verified orders, real feedback.</p>
         <div class="reviews-grid">
-          <div class="review" style="padding: 0; overflow: hidden;">
-            <img src="assets/proof1.jpg" alt="Customer Delivery Proof" style="width: 100%; height: auto; display: block;">
+          <div class="proof-card">
+            <img src="assets/proof1.jpg" alt="Customer Delivery Proof">
+            <div class="proof-card-overlay">
+              <div class="proof-badge">✓ Verified</div>
+              <div class="proof-title">Instant Delivery</div>
+            </div>
           </div>
-          <div class="review" style="padding: 0; overflow: hidden;">
-            <img src="assets/proof2.jpg" alt="Customer Delivery Proof" style="width: 100%; height: auto; display: block;">
+          <div class="proof-card">
+            <img src="assets/proof2.jpg" alt="Customer Delivery Proof">
+            <div class="proof-card-overlay">
+              <div class="proof-badge">✓ Verified</div>
+              <div class="proof-title">Twitch Prime Sub</div>
+            </div>
           </div>
-          <div class="review" style="padding: 0; overflow: hidden;">
-            <img src="assets/proof3.jpg" alt="Customer Delivery Proof" style="width: 100%; height: auto; display: block;">
+          <div class="proof-card">
+            <img src="assets/proof3.jpg" alt="Customer Delivery Proof">
+            <div class="proof-card-overlay">
+              <div class="proof-badge">✓ Verified</div>
+              <div class="proof-title">Satisfied Customer</div>
+            </div>
           </div>
-          <div class="review" style="padding: 0; overflow: hidden;">
-            <img src="assets/proof4.jpg" alt="Customer Delivery Proof" style="width: 100%; height: auto; display: block;">
+          <div class="proof-card">
+            <img src="assets/proof4.jpg" alt="Customer Delivery Proof">
+            <div class="proof-card-overlay">
+              <div class="proof-badge">✓ Verified</div>
+              <div class="proof-title">Fast Service</div>
+            </div>
           </div>
-          <div class="review" style="padding: 0; overflow: hidden;">
-            <img src="assets/proof5.jpg" alt="Customer Delivery Proof" style="width: 100%; height: auto; display: block;">
+          <div class="proof-card">
+            <img src="assets/proof5.jpg" alt="Customer Delivery Proof">
+            <div class="proof-card-overlay">
+              <div class="proof-badge">✓ Verified</div>
+              <div class="proof-title">Secure Checkout</div>
+            </div>
           </div>
         </div>
       </div>
