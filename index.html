@@ -502,9 +502,20 @@
     }
 
     .reviews-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px;
+      column-count: 3;
+      column-gap: 16px;
+    }
+
+    @media (max-width: 800px) {
+      .reviews-grid {
+        column-count: 2;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .reviews-grid {
+        column-count: 1;
+      }
     }
 
     .proof-card {
@@ -512,10 +523,11 @@
       border-radius: 16px;
       overflow: hidden;
       border: 1px solid var(--border);
-      aspect-ratio: 4/5;
       cursor: pointer;
       background: var(--bg-card);
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+      transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+      break-inside: avoid;
+      margin-bottom: 16px;
     }
 
     .proof-card:hover {
@@ -526,50 +538,13 @@
 
     .proof-card img {
       width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center top;
+      height: auto;
       transition: transform 0.5s ease;
       display: block;
     }
 
     .proof-card:hover img {
-      transform: scale(1.05);
-    }
-
-    .proof-card-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to top, rgba(13, 13, 13, 0.95) 0%, rgba(13, 13, 13, 0.1) 50%, transparent 100%);
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      padding: 20px;
-      pointer-events: none;
-    }
-
-    .proof-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(16, 185, 129, 0.15);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      color: #34d399;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 5px 12px;
-      border-radius: 100px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      backdrop-filter: blur(4px);
-      width: max-content;
-      margin-bottom: 8px;
-    }
-
-    .proof-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: #fff;
+      transform: scale(1.03);
     }
 
     /* ── FAQ ── */
@@ -862,38 +837,18 @@
         <div class="reviews-grid">
           <div class="proof-card">
             <img src="assets/proof1.jpg" alt="Customer Delivery Proof">
-            <div class="proof-card-overlay">
-              <div class="proof-badge">✓ Verified</div>
-              <div class="proof-title">Instant Delivery</div>
-            </div>
           </div>
           <div class="proof-card">
             <img src="assets/proof2.jpg" alt="Customer Delivery Proof">
-            <div class="proof-card-overlay">
-              <div class="proof-badge">✓ Verified</div>
-              <div class="proof-title">Twitch Prime Sub</div>
-            </div>
           </div>
           <div class="proof-card">
             <img src="assets/proof3.jpg" alt="Customer Delivery Proof">
-            <div class="proof-card-overlay">
-              <div class="proof-badge">✓ Verified</div>
-              <div class="proof-title">Satisfied Customer</div>
-            </div>
           </div>
           <div class="proof-card">
             <img src="assets/proof4.jpg" alt="Customer Delivery Proof">
-            <div class="proof-card-overlay">
-              <div class="proof-badge">✓ Verified</div>
-              <div class="proof-title">Fast Service</div>
-            </div>
           </div>
           <div class="proof-card">
             <img src="assets/proof5.jpg" alt="Customer Delivery Proof">
-            <div class="proof-card-overlay">
-              <div class="proof-badge">✓ Verified</div>
-              <div class="proof-title">Secure Checkout</div>
-            </div>
           </div>
         </div>
       </div>
