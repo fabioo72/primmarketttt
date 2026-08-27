@@ -4,7 +4,7 @@ import { getPrices, eurToCoin } from '../../lib/prices.js';
 import { walletAddressFor } from '../../lib/chains.js';
 
 const PRODUCTS = {
-    'twitch-prime': { name: 'Twitch Prime Subscription', priceEUR: 0.5 },
+    'twitch-prime': { name: 'Twitch Prime Subscription', unitPriceEUR: 0.5, minQuantity: 10 },
 };
 
 const ORDER_TTL_MS = 30 * 60 * 1000;
@@ -24,24 +24,29 @@ export default async function handler(req, res) {
     const productKey = String(body.product || '').trim();
     const email = String(body.email || '').trim().toLowerCase();
     const coin = String(body.coin || '').trim().toUpperCase();
+    const quantity = Number.parseInt(body.quantity, 10);
 
-    if (!PRODUCTS[productKey]) return res.status(400).json({ error: 'Unknown product' });
+    const product = PRODUCTS[productKey];
+    if (!product) return res.status(400).json({ error: 'Unknown product' });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Invalid email' });
     if (!['BTC', 'LTC', 'ETH', 'USDT'].includes(coin)) return res.status(400).json({ error: 'Unsupported coin' });
+    if (!Number.isInteger(quantity) || quantity < product.minQuantity) {
+        return res.status(400).json({ error: `Minimum order is ${product.minQuantity} subs` });
+    }
 
     const address = walletAddressFor(coin);
     if (!address) return res.status(503).json({ error: `Wallet address for ${coin} is not configured` });
 
     try {
         const prices = await getPrices();
-        const priceEUR = PRODUCTS[productKey].priceEUR;
+        const priceEUR = +(product.unitPriceEUR * quantity).toFixed(2);
         const jitterSeed = crypto.randomInt(0, 1000);
         const expectedAmount = eurToCoin(priceEUR, coin, prices[coin], jitterSeed);
         const id = 'PM-' + crypto.randomBytes(4).toString('hex').toUpperCase();
         const now = new Date();
         const order = await createOrder({
             id,
-            product: PRODUCTS[productKey].name,
+            product: `${product.name} ×${quantity}`,
             email,
             priceEUR,
             coin,

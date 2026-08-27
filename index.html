@@ -814,8 +814,8 @@
             </div>
             <div class="card-footer">
               <div>
-                <span class="price-label">Starting at</span>
-                <span class="price">€0.50</span>
+                <span class="price-label">€0.50 / sub · 10 sub minimum</span>
+                <span class="price">From €5.00</span>
               </div>
               <button class="btn btn-primary" onclick="openCryptoCheckout('twitch-prime')">Purchase</button>
             </div>
@@ -911,8 +911,16 @@
       <div id="cc-step-form">
         <h3 style="font-size:1.4rem;font-weight:700;margin-bottom:6px;">Crypto Checkout</h3>
         <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:22px;">
-          Twitch Prime Subscription · <strong style="color:white;">€0.50</strong>
+          Twitch Prime Subscription · <strong style="color:white;">€0.50 / sub</strong> ·
+          <span style="color:var(--text-secondary);">10 sub minimum</span>
         </p>
+
+        <label style="display:block;font-size:0.8rem;color:var(--text-secondary);margin-bottom:6px;">Quantity (min 10)</label>
+        <input id="cc-quantity" type="number" min="10" step="1" value="10" oninput="updateCcTotal()"
+          style="width:100%;padding:12px 14px;background:#18181b;border:1px solid var(--border);border-radius:10px;color:white;font-size:0.95rem;margin-bottom:6px;" />
+        <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">
+          Total: <strong id="cc-total" style="color:white;">€5.00</strong>
+        </div>
 
         <label style="display:block;font-size:0.8rem;color:var(--text-secondary);margin-bottom:6px;">Email for delivery</label>
         <input id="cc-email" type="email" required placeholder="you@example.com"
@@ -1120,11 +1128,21 @@
       err.style.display = 'block';
     }
 
+    function updateCcTotal() {
+      const qty = Math.max(10, parseInt(document.getElementById('cc-quantity').value, 10) || 0);
+      document.getElementById('cc-total').textContent = '€' + (qty * 0.5).toFixed(2);
+    }
+
     async function submitCryptoOrder() {
       const email = document.getElementById('cc-email').value.trim();
       const coin = document.getElementById('cc-coin').value;
+      const quantity = parseInt(document.getElementById('cc-quantity').value, 10);
       const submit = document.getElementById('cc-submit');
 
+      if (!Number.isInteger(quantity) || quantity < 10) {
+        showCcError('Minimum order is 10 subs.');
+        return;
+      }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         showCcError('Please enter a valid email address.');
         return;
@@ -1138,7 +1156,7 @@
         const res = await fetch('/api/orders/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ product: 'twitch-prime', email, coin }),
+          body: JSON.stringify({ product: 'twitch-prime', email, coin, quantity }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to create order');
