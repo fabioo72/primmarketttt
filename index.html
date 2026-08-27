@@ -12,9 +12,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
-  <script src="https://platform.billgang.com/embed.js"
-    onerror="console.error('Billgang script failed to load. Adblocker likely active.')"></script>
-
   <style>
     *,
     *::before,
@@ -739,7 +736,7 @@
         </div>
         <div class="features">
           <div class="feature-item"><span>⚡</span> <strong>Instant delivery</strong> — seconds, not minutes</div>
-          <div class="feature-item"><span>🛡️</span> <strong>Secure checkout</strong> — card &amp; crypto accepted</div>
+          <div class="feature-item"><span>🛡️</span> <strong>Crypto checkout</strong> — BTC, LTC, ETH, USDT</div>
           <div class="feature-item"><span>💬</span> <strong>24/7 support</strong> — real responses, fast</div>
           <div class="feature-item"><span>✅</span> <strong>4,800+ orders</strong> delivered</div>
         </div>
@@ -781,8 +778,8 @@
           <div class="how-card">
             <div class="how-num">02</div>
             <div class="how-title">Pay securely</div>
-            <div class="how-desc">Checkout with card or crypto (BTC, LTC, ETH). Powered by Billgang — encrypted
-              end-to-end.</div>
+            <div class="how-desc">Pay directly with BTC, LTC, ETH, USDT, or USDC to our own wallet.
+              On-chain payment confirmation, no third-party processor.</div>
           </div>
           <div class="how-card">
             <div class="how-num">03</div>
@@ -820,8 +817,7 @@
                 <span class="price-label">Starting at</span>
                 <span class="price">€0.50</span>
               </div>
-              <button class="btn btn-primary" data-billgang-product-path="twitch-prime"
-                data-billgang-domain="primemarket101.bgng.io">Purchase</button>
+              <button class="btn btn-primary" onclick="openCryptoCheckout('twitch-prime')">Purchase</button>
             </div>
           </div>
         </div>
@@ -869,8 +865,9 @@
           <div class="faq-item">
             <button class="faq-q" onclick="toggleFaq(this)">What payment methods do you accept? <span
                 class="arrow">+</span></button>
-            <div class="faq-a">We accept card payments and major cryptocurrencies including Bitcoin (BTC), Litecoin
-              (LTC), and Ethereum (ETH) — all handled securely through Billgang.</div>
+            <div class="faq-a">We accept cryptocurrency directly to our own wallets: Bitcoin (BTC), Litecoin (LTC),
+              Ethereum (ETH), and USDT (ERC-20). No third-party processor — you send the exact amount shown at
+              checkout and the site confirms your payment on-chain automatically.</div>
           </div>
           <div class="faq-item">
             <button class="faq-q" onclick="toggleFaq(this)">What if my order doesn't arrive? <span
@@ -904,7 +901,101 @@
     </div>
   </footer>
 
-  <!-- SUCCESS MODAL (handles checkout status) -->
+  <!-- CRYPTO CHECKOUT MODAL -->
+  <div id="crypto-modal" class="modal-overlay" style="display: none;">
+    <div style="background:#09090b;border:1px solid var(--border);width:100%;max-width:460px;padding:32px;border-radius:24px;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.5);color:white;">
+      <button onclick="closeCryptoCheckout()" aria-label="Close"
+        style="position:absolute;top:16px;right:16px;background:transparent;border:none;color:var(--text-secondary);font-size:22px;cursor:pointer;line-height:1;">&times;</button>
+
+      <!-- Step 1: form -->
+      <div id="cc-step-form">
+        <h3 style="font-size:1.4rem;font-weight:700;margin-bottom:6px;">Crypto Checkout</h3>
+        <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:22px;">
+          Twitch Prime Subscription · <strong style="color:white;">€0.50</strong>
+        </p>
+
+        <label style="display:block;font-size:0.8rem;color:var(--text-secondary);margin-bottom:6px;">Email for delivery</label>
+        <input id="cc-email" type="email" required placeholder="you@example.com"
+          style="width:100%;padding:12px 14px;background:#18181b;border:1px solid var(--border);border-radius:10px;color:white;font-size:0.95rem;margin-bottom:16px;" />
+
+        <label style="display:block;font-size:0.8rem;color:var(--text-secondary);margin-bottom:6px;">Coin</label>
+        <select id="cc-coin"
+          style="width:100%;padding:12px 14px;background:#18181b;border:1px solid var(--border);border-radius:10px;color:white;font-size:0.95rem;margin-bottom:20px;">
+          <option value="BTC">Bitcoin (BTC)</option>
+          <option value="LTC">Litecoin (LTC)</option>
+          <option value="ETH">Ethereum (ETH)</option>
+          <option value="USDT">USDT (ERC-20)</option>
+        </select>
+
+        <div id="cc-error"
+          style="display:none;color:#ff4a4a;background:rgba(255,74,74,0.08);border:1px solid rgba(255,74,74,0.25);padding:10px 12px;border-radius:8px;font-size:0.85rem;margin-bottom:14px;"></div>
+
+        <button id="cc-submit" class="btn btn-primary" onclick="submitCryptoOrder()" style="width:100%;">
+          Get payment address
+        </button>
+      </div>
+
+      <!-- Step 2: pay -->
+      <div id="cc-step-pay" style="display:none;">
+        <h3 style="font-size:1.25rem;font-weight:700;margin-bottom:4px;">Send exactly</h3>
+        <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:16px;">
+          Order <span id="cc-order-id" style="font-family:monospace;color:white;"></span>
+        </p>
+
+        <div style="background:#18181b;border:1px dashed var(--border);border-radius:12px;padding:16px;margin-bottom:14px;text-align:center;">
+          <div style="font-family:monospace;font-size:1.35rem;font-weight:700;color:white;word-break:break-all;">
+            <span id="cc-amount"></span> <span id="cc-coin-label" style="color:var(--text-secondary);"></span>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:center;margin-bottom:14px;">
+          <img id="cc-qr" alt="QR code" width="180" height="180"
+            style="background:white;border-radius:8px;padding:8px;" />
+        </div>
+
+        <div style="background:#18181b;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:16px;">
+          <div style="font-size:0.7rem;text-transform:uppercase;color:var(--text-secondary);letter-spacing:1px;margin-bottom:6px;">To address</div>
+          <div id="cc-address" style="font-family:monospace;font-size:0.8rem;color:white;word-break:break-all;line-height:1.4;"></div>
+          <button onclick="copyAddress()"
+            style="margin-top:10px;background:transparent;border:1px solid var(--border);color:white;padding:6px 12px;border-radius:6px;font-size:0.8rem;cursor:pointer;">
+            Copy address
+          </button>
+        </div>
+
+        <div id="cc-status-line"
+          style="text-align:center;font-size:0.9rem;color:var(--text-secondary);margin-bottom:10px;">
+          <span class="cc-spinner" style="display:inline-block;width:12px;height:12px;border:2px solid var(--border);border-top-color:white;border-radius:50%;animation:cc-spin 0.8s linear infinite;vertical-align:middle;margin-right:8px;"></span>
+          Waiting for payment…
+        </div>
+        <div style="text-align:center;font-size:0.75rem;color:var(--text-secondary);">
+          Expires <span id="cc-expires"></span>
+        </div>
+      </div>
+
+      <!-- Step 3: paid -->
+      <div id="cc-step-paid" style="display:none;text-align:center;">
+        <div style="width:60px;height:60px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 16px;box-shadow:0 0 20px var(--primary-glow);">✓</div>
+        <h3 style="font-size:1.4rem;font-weight:700;margin-bottom:8px;">Payment received</h3>
+        <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:18px;">
+          Your order is confirmed. Delivery is handled manually — you'll get your code by email
+          shortly, or check the status page any time.
+        </p>
+        <div style="background:#18181b;border:1px dashed var(--border);border-radius:12px;padding:14px;margin-bottom:18px;">
+          <div style="font-size:0.7rem;text-transform:uppercase;color:var(--text-secondary);letter-spacing:1px;margin-bottom:6px;">Order ID</div>
+          <div id="cc-paid-id" style="font-family:monospace;font-size:1.2rem;color:white;font-weight:700;"></div>
+        </div>
+        <a href="/status" class="btn btn-primary" style="display:block;width:100%;text-align:center;text-decoration:none;">
+          View order status
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes cc-spin { to { transform: rotate(360deg); } }
+  </style>
+
+  <!-- SUCCESS MODAL (legacy — kept for future direct trigger, unused by crypto flow) -->
   <div id="success-modal" class="modal-overlay" style="display: none;">
     <div style="
       display: flex;
@@ -988,183 +1079,151 @@
     }, { threshold: 0.5 });
     observer.observe(counterEl);
 
-    // --- BILLGANG CHECKOUT EVENT LISTENER & LOCAL STORAGE SYNC ---
+    // --- CRYPTO CHECKOUT ---
 
-    // Function to handle a successful purchase event
-    function handleCheckoutSuccess(eventData) {
-      console.log("Processing successful purchase:", eventData);
+    const COIN_URI_SCHEME = {
+      BTC: 'bitcoin', LTC: 'litecoin', ETH: 'ethereum',
+      USDT: 'ethereum', USDC: 'ethereum',
+    };
 
-      // Generate a unique Ticket ID
-      const randomId = Math.random().toString(36).substring(2, 7).toUpperCase();
-      const ticketId = 'TKT-' + randomId;
+    let ccPollTimer = null;
+    let ccExpiresTimer = null;
+    let ccCurrentOrder = null;
 
-      // Extract details if sent by Billgang, or fallback to defaults
-      const email = (eventData && (eventData.email || eventData.customer_email ||
-        (eventData.payload && (eventData.payload.email || eventData.payload.customer_email)))) || "customer@gmail.com";
-
-      const price = (eventData && (eventData.price || eventData.amount ||
-        (eventData.payload && (eventData.payload.price || eventData.payload.amount)))) || "0.50";
-
-      // Create new order record
-      const newOrder = {
-        id: ticketId,
-        email: email,
-        product: "Twitch Prime Subscription",
-        price: price,
-        date: new Date().toISOString(),
-        status: "completed"
-      };
-
-      // Save order to LocalStorage so it works with status.html and admin.html
-      try {
-        const existingOrders = JSON.parse(localStorage.getItem('prime_orders') || '[]');
-        existingOrders.push(newOrder);
-        localStorage.setItem('prime_orders', JSON.stringify(existingOrders));
-        console.log("Saved order to localStorage:", newOrder);
-      } catch (err) {
-        console.error("Failed to save order to localStorage:", err);
-      }
-
-      // Update modal UI and show success modal
-      const ticketDisplay = document.getElementById('ticket-display');
-      if (ticketDisplay) {
-        ticketDisplay.textContent = ticketId;
-      }
-
-      const successModal = document.getElementById('success-modal');
-      if (successModal) {
-        successModal.style.display = 'flex';
-      }
-
-      // Clean up any remaining checkout iframe
-      const checkoutIframe = document.querySelector('iframe');
-      if (checkoutIframe) {
-        checkoutIframe.remove();
-      }
+    function openCryptoCheckout(productKey) {
+      resetCryptoCheckout();
+      document.getElementById('crypto-modal').style.display = 'flex';
+      document.getElementById('cc-email').focus();
     }
 
-    // Listen for postMessage events from the Billgang checkout iframe
-    window.addEventListener('message', function (event) {
-      // Security check: Verify it is from Billgang platform
-      if (!event.origin.includes('billgang') && !event.origin.includes('bgng')) {
+    function closeCryptoCheckout() {
+      document.getElementById('crypto-modal').style.display = 'none';
+      resetCryptoCheckout();
+    }
+
+    function resetCryptoCheckout() {
+      if (ccPollTimer) { clearInterval(ccPollTimer); ccPollTimer = null; }
+      if (ccExpiresTimer) { clearInterval(ccExpiresTimer); ccExpiresTimer = null; }
+      ccCurrentOrder = null;
+      document.getElementById('cc-step-form').style.display = 'block';
+      document.getElementById('cc-step-pay').style.display = 'none';
+      document.getElementById('cc-step-paid').style.display = 'none';
+      const err = document.getElementById('cc-error');
+      err.style.display = 'none'; err.textContent = '';
+      document.getElementById('cc-submit').disabled = false;
+      document.getElementById('cc-submit').textContent = 'Get payment address';
+    }
+
+    function showCcError(msg) {
+      const err = document.getElementById('cc-error');
+      err.textContent = msg;
+      err.style.display = 'block';
+    }
+
+    async function submitCryptoOrder() {
+      const email = document.getElementById('cc-email').value.trim();
+      const coin = document.getElementById('cc-coin').value;
+      const submit = document.getElementById('cc-submit');
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showCcError('Please enter a valid email address.');
         return;
       }
 
-      console.log("Billgang postMessage received:", event.data);
+      submit.disabled = true;
+      submit.textContent = 'Creating order…';
+      document.getElementById('cc-error').style.display = 'none';
 
-      let data = event.data;
-      if (typeof data === 'string') {
-        try {
-          data = JSON.parse(data);
-        } catch (e) {
-          // Keep it as a string
-        }
+      try {
+        const res = await fetch('/api/orders/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ product: 'twitch-prime', email, coin }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to create order');
+        showPaymentStep(data);
+      } catch (err) {
+        showCcError(err.message || 'Something went wrong.');
+        submit.disabled = false;
+        submit.textContent = 'Get payment address';
       }
+    }
 
-      // Identify successful payment events based on typical platform event names
-      const isPaymentSuccess = data && (
-        data.event === 'payment.success' ||
-        data.event === 'payment_success' ||
-        data.event === 'completed' ||
-        data.event === 'checkout.success' ||
-        data.event === 'checkout_success' ||
-        data.type === 'billgang.payment.success' ||
-        data.type === 'payment.success' ||
-        data.status === 'success' ||
-        data.status === 'completed' ||
-        (data.action && (data.action === 'success' || data.action === 'completed'))
-      );
+    function showPaymentStep(order) {
+      ccCurrentOrder = order;
+      try {
+        const known = JSON.parse(localStorage.getItem('prime_orders') || '[]');
+        known.push({ id: order.id, coin: order.coin, expectedAmount: order.expectedAmount, createdAt: Date.now() });
+        localStorage.setItem('prime_orders', JSON.stringify(known.slice(-20)));
+      } catch (_) {}
 
-      if (isPaymentSuccess) {
-        handleCheckoutSuccess(data);
+      document.getElementById('cc-step-form').style.display = 'none';
+      document.getElementById('cc-step-pay').style.display = 'block';
+      document.getElementById('cc-order-id').textContent = order.id;
+      document.getElementById('cc-amount').textContent = order.expectedAmount;
+      document.getElementById('cc-coin-label').textContent = order.coin;
+      document.getElementById('cc-address').textContent = order.address;
+
+      const scheme = COIN_URI_SCHEME[order.coin] || '';
+      const uri = scheme ? `${scheme}:${order.address}?amount=${order.expectedAmount}` : order.address;
+      const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(uri)}&size=200x200&margin=0`;
+      document.getElementById('cc-qr').src = qrSrc;
+
+      updateExpiresLabel(order.expiresAt);
+      ccExpiresTimer = setInterval(() => updateExpiresLabel(order.expiresAt), 1000);
+
+      pollStatus();
+      ccPollTimer = setInterval(pollStatus, 8000);
+    }
+
+    function updateExpiresLabel(expiresAt) {
+      const el = document.getElementById('cc-expires');
+      const remainingMs = new Date(expiresAt).getTime() - Date.now();
+      if (remainingMs <= 0) {
+        el.textContent = 'expired';
+        return;
+      }
+      const mm = Math.floor(remainingMs / 60000);
+      const ss = Math.floor((remainingMs % 60000) / 1000).toString().padStart(2, '0');
+      el.textContent = `in ${mm}:${ss}`;
+    }
+
+    async function pollStatus() {
+      if (!ccCurrentOrder) return;
+      try {
+        const res = await fetch(`/api/orders/status?id=${encodeURIComponent(ccCurrentOrder.id)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.status === 'paid' || data.status === 'delivered') {
+          if (ccPollTimer) { clearInterval(ccPollTimer); ccPollTimer = null; }
+          if (ccExpiresTimer) { clearInterval(ccExpiresTimer); ccExpiresTimer = null; }
+          document.getElementById('cc-step-pay').style.display = 'none';
+          document.getElementById('cc-step-paid').style.display = 'block';
+          document.getElementById('cc-paid-id').textContent = data.id;
+        } else if (data.status === 'expired' || data.status === 'cancelled') {
+          if (ccPollTimer) { clearInterval(ccPollTimer); ccPollTimer = null; }
+          document.getElementById('cc-status-line').textContent = 'Order expired. Please start again.';
+        }
+      } catch (_) {}
+    }
+
+    function copyAddress() {
+      const addr = document.getElementById('cc-address').textContent;
+      if (!navigator.clipboard) return;
+      navigator.clipboard.writeText(addr);
+    }
+
+    document.getElementById('crypto-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'crypto-modal') closeCryptoCheckout();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && document.getElementById('crypto-modal').style.display === 'flex') {
+        closeCryptoCheckout();
       }
     });
 
-    // Dev Helper: Expose simulation function to window/console for easy testing
-    window.simulateSuccess = function (email, price) {
-      console.log("Simulating checkout success...");
-      handleCheckoutSuccess({
-        email: email || "testbuyer@gmail.com",
-        price: price || "0.50",
-        status: "success"
-      });
-    };
-
-    // Checkout Closer Monitor: Shows an exit button on the top right when a Billgang window is active
-    (function () {
-      let exitBtn = null;
-
-      function createExitButton() {
-        const btn = document.createElement('button');
-        btn.id = 'checkout-closer';
-        btn.innerHTML = '✕ Cancel Checkout';
-        btn.style.cssText = `
-          position: fixed;
-          top: 24px;
-          right: 24px;
-          z-index: 2147483647;
-          background: rgba(13, 13, 13, 0.88);
-          color: #ff4a4a;
-          border: 1px solid rgba(255, 74, 74, 0.2);
-          padding: 10px 18px;
-          font-family: 'Inter', sans-serif;
-          font-size: 13px;
-          font-weight: 600;
-          border-radius: 100px;
-          cursor: pointer;
-          backdrop-filter: blur(14px);
-          box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-          display: none;
-          transition: all 0.2s ease;
-        `;
-
-        btn.addEventListener('mouseover', () => {
-          btn.style.background = 'rgba(255, 74, 74, 0.1)';
-          btn.style.borderColor = '#ff4a4a';
-          btn.style.transform = 'translateY(-1px)';
-        });
-
-        btn.addEventListener('mouseout', () => {
-          btn.style.background = 'rgba(13, 13, 13, 0.88)';
-          btn.style.borderColor = 'rgba(255, 74, 74, 0.2)';
-          btn.style.transform = 'translateY(0)';
-        });
-
-        btn.addEventListener('click', () => {
-          const iframes = document.querySelectorAll('iframe');
-          iframes.forEach(iframe => iframe.remove());
-
-          const billgangOverlays = document.querySelectorAll('[class*="billgang"], [id*="billgang"]');
-          billgangOverlays.forEach(overlay => {
-            if (overlay !== btn) overlay.remove();
-          });
-
-          setTimeout(() => window.location.reload(), 100);
-        });
-
-        document.body.appendChild(btn);
-        return btn;
-      }
-
-      function checkBillgang() {
-        const iframe = document.querySelector('iframe[src*="billgang"]') ||
-          document.querySelector('iframe[src*="bgng"]') ||
-          document.querySelector('iframe');
-
-        if (iframe) {
-          if (!exitBtn) {
-            exitBtn = createExitButton();
-          }
-          exitBtn.style.display = 'block';
-        } else if (exitBtn) {
-          exitBtn.style.display = 'none';
-        }
-      }
-
-      setInterval(checkBillgang, 500);
-    })();
-
-    console.log("Billgang Embed Ready");
+    console.log('Crypto checkout ready');
 
   </script>
 

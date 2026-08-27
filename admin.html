@@ -55,7 +55,7 @@
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 24px;
             margin-bottom: 40px;
         }
@@ -89,15 +89,15 @@
 
         .orders-table th,
         .orders-table td {
-            padding: 16px 24px;
+            padding: 14px 20px;
             text-align: left;
             border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
         }
 
         .orders-table th {
             background: var(--surface-hover);
             font-weight: 600;
-            font-size: 0.9rem;
             color: var(--text-secondary);
         }
 
@@ -109,13 +109,30 @@
             display: inline-block;
             padding: 4px 8px;
             border-radius: 4px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: rgba(234, 179, 8, 0.1);
+            color: #facc15;
         }
 
         .status-paid {
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
+        }
+
+        .status-delivered {
             background: rgba(34, 197, 94, 0.1);
             color: #4ade80;
+        }
+
+        .status-expired,
+        .status-cancelled {
+            background: rgba(148, 163, 184, 0.12);
+            color: #94a3b8;
         }
 
         .empty-state {
@@ -123,122 +140,223 @@
             padding: 40px;
             color: var(--text-secondary);
         }
+
+        .login-shell {
+            max-width: 420px;
+            margin: 15vh auto;
+            padding: 32px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+        }
     </style>
 </head>
 
 <body>
-    <div class="admin-layout">
+    <div id="login-view" class="login-shell" style="display:none;">
+        <h2 style="margin-bottom:6px;">Admin login</h2>
+        <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:20px;">
+            Enter your ADMIN_TOKEN to view orders.
+        </p>
+        <input id="admin-token" type="password" placeholder="Admin token"
+            style="width:100%;padding:12px 14px;background:#18181b;border:1px solid var(--border);border-radius:10px;color:white;font-size:0.95rem;margin-bottom:12px;" />
+        <button class="btn btn-primary" onclick="saveToken()" style="width:100%;">Continue</button>
+        <div id="login-error" style="color:#ff4a4a;font-size:0.85rem;margin-top:12px;display:none;"></div>
+    </div>
+
+    <div id="app-view" class="admin-layout" style="display:none;">
         <aside class="sidebar">
             <a href="/" class="sidebar-brand">
                 <span class="text-gradient">Prime</span>Admin
             </a>
 
             <nav>
-                <a href="#" class="nav-item active">Dashboard</a>
-                <a href="#" class="nav-item">Orders</a>
-                <a href="#" class="nav-item">Products</a>
-                <a href="#" class="nav-item">Tickets</a>
-                <a href="#" class="nav-item">Settings</a>
+                <a href="#" class="nav-item active">Orders</a>
+                <a href="/status" class="nav-item">Status page</a>
+                <a href="#" class="nav-item" onclick="logout();return false;">Log out</a>
             </nav>
         </aside>
 
         <main class="admin-content">
             <div class="header">
-                <h2>Dashboard</h2>
-                <button class="btn btn-outline" onclick="clearData()">Reset Demo Data</button>
+                <h2>Orders</h2>
+                <button class="btn btn-outline" onclick="loadOrders()">Refresh</button>
             </div>
 
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-label">Total Revenue</div>
-                    <div class="stat-value" id="total-revenue">$0.00</div>
+                    <div class="stat-label">Pending</div>
+                    <div class="stat-value" id="stat-pending">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Total Orders</div>
-                    <div class="stat-value" id="total-orders">0</div>
+                    <div class="stat-label">Paid — awaiting delivery</div>
+                    <div class="stat-value" id="stat-paid">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Active Tickets</div>
-                    <div class="stat-value">0</div>
+                    <div class="stat-label">Delivered</div>
+                    <div class="stat-value" id="stat-delivered">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Revenue (EUR, paid+delivered)</div>
+                    <div class="stat-value" id="stat-revenue">€0.00</div>
                 </div>
             </div>
 
-            <h3 style="margin-bottom: 20px;">Recent Orders</h3>
             <div style="overflow-x: auto;">
                 <table class="orders-table">
                     <thead>
                         <tr>
-                            <th>Ticket ID</th>
+                            <th>Order</th>
                             <th>Product</th>
+                            <th>Email</th>
                             <th>Amount</th>
-                            <th>Gmail</th>
-                            <th>Discord</th>
-                            <th>Date</th>
+                            <th>Coin</th>
                             <th>Status</th>
+                            <th>Date</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody id="orders-body">
-                        <!-- Filled by JS -->
-                    </tbody>
+                    <tbody id="orders-body"></tbody>
                 </table>
             </div>
         </main>
     </div>
 
     <script>
-        // Load orders from LocalStorage
-        function loadDashboard() {
-            const orders = JSON.parse(localStorage.getItem('prime_orders') || '[]');
+        function getToken() { return sessionStorage.getItem('pm_admin_token') || ''; }
+        function setToken(t) { sessionStorage.setItem('pm_admin_token', t); }
+        function clearToken() { sessionStorage.removeItem('pm_admin_token'); }
+
+        async function saveToken() {
+            const t = document.getElementById('admin-token').value.trim();
+            const err = document.getElementById('login-error');
+            err.style.display = 'none';
+            if (!t) { err.textContent = 'Token is required.'; err.style.display = 'block'; return; }
+            setToken(t);
+            const ok = await tryLoad();
+            if (!ok) {
+                clearToken();
+                err.textContent = 'Unauthorized. Check your token.';
+                err.style.display = 'block';
+            }
+        }
+
+        function logout() { clearToken(); showLogin(); }
+
+        function showLogin() {
+            document.getElementById('login-view').style.display = 'block';
+            document.getElementById('app-view').style.display = 'none';
+        }
+        function showApp() {
+            document.getElementById('login-view').style.display = 'none';
+            document.getElementById('app-view').style.display = 'grid';
+        }
+
+        async function tryLoad() {
+            const token = getToken();
+            if (!token) { showLogin(); return false; }
+            try {
+                const res = await fetch('/api/admin/orders', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (res.status === 401) return false;
+                if (!res.ok) throw new Error('Failed');
+                const data = await res.json();
+                showApp();
+                renderOrders(data.orders || []);
+                return true;
+            } catch (e) {
+                console.error(e);
+                return false;
+            }
+        }
+
+        async function loadOrders() { await tryLoad(); }
+
+        function renderOrders(orders) {
             const tbody = document.getElementById('orders-body');
-            const totalRevenueEl = document.getElementById('total-revenue');
-            const totalOrdersEl = document.getElementById('total-orders');
-
-            let revenue = 0;
-
             tbody.innerHTML = '';
 
+            let pending = 0, paid = 0, delivered = 0, revenue = 0;
+            for (const o of orders) {
+                if (o.status === 'pending') pending++;
+                if (o.status === 'paid') paid++;
+                if (o.status === 'delivered') delivered++;
+                if (o.status === 'paid' || o.status === 'delivered') revenue += Number(o.priceEUR) || 0;
+            }
+            document.getElementById('stat-pending').textContent = pending;
+            document.getElementById('stat-paid').textContent = paid;
+            document.getElementById('stat-delivered').textContent = delivered;
+            document.getElementById('stat-revenue').textContent = '€' + revenue.toFixed(2);
+
             if (orders.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="empty-state">No orders yet. Go buy something!</td>
-                    </tr>
+                tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No orders yet.</td></tr>`;
+                return;
+            }
+
+            for (const o of orders) {
+                const date = new Date(o.createdAt).toLocaleString();
+                const badgeClass = 'status-' + o.status;
+                let action = '';
+                if (o.status === 'paid') {
+                    action = `<button class="btn btn-primary" style="padding:6px 12px;font-size:0.8rem;" onclick="deliver('${o.id}')">Deliver</button>`;
+                } else if (o.status === 'delivered') {
+                    action = `<span style="color:var(--text-secondary);font-family:monospace;font-size:0.8rem;">${escapeHtml(o.deliveryCode || '')}</span>`;
+                } else {
+                    action = '<span style="color:var(--text-secondary);">—</span>';
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-family:monospace;">${escapeHtml(o.id)}</td>
+                    <td>${escapeHtml(o.product || '')}</td>
+                    <td>${escapeHtml(o.email || '')}</td>
+                    <td style="font-family:monospace;">${escapeHtml(o.expectedAmount || '')}</td>
+                    <td>${escapeHtml(o.coin || '')}</td>
+                    <td><span class="status-badge ${badgeClass}">${o.status}</span></td>
+                    <td style="color:var(--text-secondary);">${date}</td>
+                    <td>${action}</td>
                 `;
-            } else {
-                // Sort by new
-                orders.reverse().forEach(order => {
-                    revenue += parseFloat(order.price);
-                    const date = new Date(order.date).toLocaleString();
+                tbody.appendChild(tr);
+            }
+        }
 
-                    const row = `
-                        <tr>
-                            <td style="font-family: monospace; color: var(--text-secondary);">#${order.id.slice(0, 8)}</td>
-                            <td>${order.product}</td>
-                            <td>$${order.price}</td>
-                            <td>${order.email}</td>
-                            <td style="font-size: 0.9rem; color: var(--text-secondary);">${date}</td>
-                            <td><span class="status-badge status-paid">Paid</span></td>
-                        </tr>
-                    `;
-                    tbody.innerHTML += row;
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
+        async function deliver(id) {
+            const code = prompt('Delivery code / credentials for order ' + id + ':');
+            if (!code) return;
+            try {
+                const res = await fetch('/api/admin/deliver', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + getToken(),
+                    },
+                    body: JSON.stringify({ id, deliveryCode: code }),
                 });
-            }
-
-            totalRevenueEl.innerText = '$' + revenue.toFixed(2);
-            totalOrdersEl.innerText = orders.length;
-        }
-
-        function clearData() {
-            if (confirm('Clear all order data?')) {
-                localStorage.removeItem('prime_orders');
-                loadDashboard();
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed');
+                await loadOrders();
+            } catch (e) {
+                alert('Delivery failed: ' + e.message);
             }
         }
 
-        // Init
-        loadDashboard();
+        (async () => {
+            if (getToken()) {
+                const ok = await tryLoad();
+                if (!ok) showLogin();
+            } else {
+                showLogin();
+            }
+        })();
 
-        // Refresh every 5s to simulate "live" updates if tab is open
-        setInterval(loadDashboard, 5000);
+        setInterval(() => { if (getToken()) tryLoad(); }, 15000);
     </script>
 </body>
 
